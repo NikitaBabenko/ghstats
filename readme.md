@@ -34,6 +34,15 @@ or public stats pages where GitHub's built-in traffic tab is too short-lived.
 
 ## Quick start
 
+### VibeNest pilot (not yet validated)
+
+[![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
+
+This fork includes a [guided VibeNest configuration](VIBENEST.md). The button opens
+the repository setup flow; it does not provision a GitHub token or prove a working
+deployment. Free-tier deployment, real synchronization, and persistence have **not
+yet been validated**. Read the prerequisites and current limitations before deploying.
+
 ```sh
 docker run -d --env-file .env -p 8080:8080 -v ./data:/app/data --name ghstats ghcr.io/vladkens/ghstats:latest
 ```

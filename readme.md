@@ -45,6 +45,8 @@ Compose is archived at `vibenest/upstream/compose.yml`. The button opens reposit
 setup; it does not provision credentials or prove a working deployment. Free-tier
 deployment, real synchronization, and persistence have **not yet been validated**.
 Read the prerequisites and current limitations before deploying.
+The recipe budgets 256 MiB total; VibeNest calculates both container CPU quotas
+from the plan's 0.5 platform vCPU and the assigned server's CPU scale.
 
 ```sh
 docker run -d --env-file .env -p 8080:8080 -v ./data:/app/data --name ghstats ghcr.io/vladkens/ghstats:latest

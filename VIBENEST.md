@@ -4,6 +4,10 @@ This fork preserves ghstats v0.10.0 source, tests, MIT license, the original roo
 Dockerfile, and upstream workflows. The original Compose is preserved byte-for-byte
 at `vibenest/upstream/compose.yml` for reference; its relative build paths describe
 the original repository root, so do not deploy that archived copy in place.
+For an intentional upstream local build, run from the repository root:
+`docker compose --project-directory . -f vibenest/upstream/compose.yml up --build`.
+This resolves its build context and `.env` against the original root; it is not
+the VibeNest pilot's deployment command.
 The selected root `compose.yml` adds a real HTTP frontend and uses the verified
 upstream application image. Only `vibenest/frontend` is built by this recipe.
 GitHub Actions are disabled in this fork's repository settings; upstream workflow
@@ -73,18 +77,17 @@ RepoDigests with the pinned manifest/config and provenance. The frontend's image
 ID will differ from its base image after COPY. A new configuration requires fresh
 source/owner/security admission; an earlier source observation is not reusable.
 
-The proposed total is 256 MiB / 0.5 platform vCPU: frontend 32 MiB / 0.05 and
-backend 224 MiB / 0.45. These are unmeasured allocation hypotheses. Native managed
-preparation must validate the complete topology, persist effective hard limits
-including swap policy, and account for host CPU scaling. Refusal is a stop
-condition, not permission to weaken a quota or security gate. Managed preparation
-and initial domain binding may produce another configuration commit and a second
-gated deployment.
-On the reviewed platform revision, explicit CPU caps totaling 0.5 fit a host scale
-of 1. If the assigned host has a smaller CPU scale, ordinary preparation may
-reject these caps unless its existing authorized resource-reduction path applies.
-Check that contract before launch; do not assume the YAML caps are automatically
-scaled or alter the server's quota policy to make this pilot fit.
+The proposed plan total is 256 MiB / 0.5 platform vCPU. Memory is explicitly split
+into frontend 32 MiB and backend 224 MiB; runtime fit remains unmeasured. The fork
+intentionally omits CPU caps: native managed preparation calculates the host CPU
+budget using the assigned server's scale and divides it across both services.
+On the reviewed platform revision, a scale of 0.5 yields a total host limit of
+0.25 CPU, shared equally as 0.125 per service. These are expected normalized
+values, not measured quotas. Acceptance must inspect both actual CPU quotas and
+their sum, as well as memory and swap limits. Do not change server policy or grant
+extra resources. Refusal is a stop condition, not permission to weaken a quota or
+security gate. Managed preparation and initial domain binding may produce another
+configuration commit and a second gated deployment.
 
 | Variable | Intended value / requirement |
 | --- | --- |

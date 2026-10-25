@@ -10,7 +10,6 @@ services:
       ghstats:
         condition: service_healthy
     mem_limit: 32m
-    cpus: 0.05
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
       interval: 30s
@@ -32,7 +31,6 @@ services:
     expose:
       - "8080"
     mem_limit: 224m
-    cpus: 0.45
     volumes:
       - ghstats-data:/app/data
 

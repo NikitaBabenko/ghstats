@@ -1,15 +1,38 @@
 services:
-  ghstats:
+  frontend:
     build:
-      context: .
+      context: ./vibenest/frontend
       dockerfile: Dockerfile
-    image: ghstats:local
-    container_name: ghstats
     restart: unless-stopped
-    env_file:
-      - .env
-    ports:
-      - "${HOST_PORT:-8080}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      ghstats:
+        condition: service_healthy
+    mem_limit: 32m
+    cpus: 0.05
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+  ghstats:
+    image: ghcr.io/vladkens/ghstats@sha256:23e05ff578d1e2b9ceb16228bae673d5dacfd34f5d8678407726d62a330682bf
+    restart: unless-stopped
+    environment:
+      HOST: ${HOST:?Set HOST to 0.0.0.0}
+      PORT: ${PORT:?Set PORT to 8080}
+      DB_PATH: ${DB_PATH:?Set DB_PATH to /app/data/ghstats.db}
+      GHS_FILTER: ${GHS_FILTER:?Set one approved public OWNER/REPO}
+      GHS_INCLUDE_PRIVATE: ${GHS_INCLUDE_PRIVATE:?Set GHS_INCLUDE_PRIVATE to false}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:?Set the repository-scoped GitHub credential}
+      GHS_API_TOKEN: ${GHS_API_TOKEN:?Set a separate API secret}
+      GHS_CRON_SCHEDULE: ${GHS_CRON_SCHEDULE:?Set the six-field sync schedule}
+    expose:
+      - "8080"
+    mem_limit: 224m
+    cpus: 0.45
     volumes:
       - ghstats-data:/app/data
 

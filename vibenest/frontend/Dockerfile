@@ -1,0 +1,2 @@
+FROM nginx/nginx-unprivileged@sha256:ea8a305bb7bff1e622c8223a097bf5c7664d36b05371717e23dc69972e1924e6
+COPY nginx.conf /etc/nginx/nginx.conf

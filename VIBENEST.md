@@ -1,4 +1,4 @@
-# VibeNest mixed Compose pilot — not yet validated
+# VibeNest mixed Compose pilot — guided traffic scenario verified
 
 This fork preserves ghstats v0.10.0 source, tests, MIT license, the original root
 Dockerfile, and upstream workflows. The original Compose is preserved byte-for-byte
@@ -11,9 +11,21 @@ the VibeNest pilot's deployment command.
 The selected root `compose.yml` adds a real HTTP frontend and uses the verified
 upstream application image. Only `vibenest/frontend` is built by this recipe.
 GitHub Actions are disabled in this fork's repository settings; upstream workflow
-files remain intact. The earlier configuration revision `e7f4a246` built the
-frontend and started both services through native deployment. The pilot remains
-unaccepted; the revised CPU caps below have not been deployed.
+files remain intact. On 25 October 2026, the configured pilot passed real traffic
+sync, public HTTPS/API/badges, and SQLite retention across a normal replacement.
+This is a guided, already-configured project result; unattended fresh signup with
+no environment values has not been validated.
+
+[Public demo](https://ghstats-oss-20261025.vibenest.net/) is retained for review.
+The pilot token expires at **20:00 UTC on 25 October 2026** (00:00 on 26 October
+in Asia/Tbilisi); continued live synchronization after expiry is not promised.
+Use your own repository-scoped credential for your deployment.
+
+The runtime-tested fork commit is `161628afaa67019ff89304a48a36c297adf3614f`.
+Successful deployments 5494 and 5495 served managed commits `432b78ba7fa723abfa0af124dfb0649c5a93d2d1`
+and `84d02543269adccec114a66c91f3f6c92aa06ffc`. The latter has the tested fork
+commit as its parent and changes only `compose.yml` for native configuration.
+Later documentation-only changes do not imply another runtime test.
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -34,10 +46,16 @@ unaccepted; the revised CPU caps below have not been deployed.
    neither a Storage-tab entry nor HTTP success proves persistence.
 4. Configure the values below in the platform's environment settings. Keep secret
    values out of Git, screenshots, URLs, logs, and support messages.
+   For this pilot, an operator disabled the provider's
+   `inject_build_args_to_dockerfile` setting before the verified rebuild. Current
+   VibeNest owner UI cannot set this option. This operator-assisted step is part
+   of the tested setup; the button alone does not provide it. Project ENV still
+   reaches both services at runtime, so do not assume per-service isolation.
 5. Confirm hardware eligibility, source/security admission, build capability, and
    the intended public exposure before using the normal gated deployment action.
-   The assigned pilot runtime is paused for further deployments while the blockers
-   below are investigated. Do not repeat launch or bypass a refused continuation.
+   After a prior Stop, the button flow required an explicit VibeNest Start
+   Application. For Compose, that action performed a fresh gated redeploy.
+   Do not bypass a refused gate or use a direct provider Start.
 
 ## Two useful services and separate identities
 
@@ -48,8 +66,11 @@ unaccepted; the revised CPU caps below have not been deployed.
   static success response, forward-proxy/CONNECT module, dynamic destination, or
   response cache. Only the frontend receives a public domain; neither service
   publishes host ports. The Compose recipe declares no frontend application ENV;
-  however, the tested provider injected project secrets into frontend runtime ENV
-  and build history. Secret isolation is an unresolved blocker, not a guarantee.
+  however, the provider injects project secrets into frontend runtime ENV.
+  Initially they also reached image build history. After the operator-assisted
+  setting and normal rebuild, both token values were absent from the new frontend
+  image history and its image ENV. Old images were not retroactively cleaned.
+  Runtime fanout remains; no per-service secret isolation is claimed.
 - `ghstats` runs the unchanged upstream image, not a binary compiled from the new
   frontend configuration. Its source is upstream commit
   `bfa5a13e9a520b695292f307ca774034eb20ceec` (v0.10.0). Registry-attached BuildKit
@@ -90,8 +111,9 @@ provides a 0.25 host-CPU ceiling. Automatic 0.125-per-service quotas in the earl
 revision became actual cgroup quotas of `13000 100000` each (0.26 total).
 The current recipe therefore explicitly requests `cpus: '0.12'` on each service:
 0.24 host CPU total, below that ceiling, not a claim to the full plan CPU amount.
-These revised values have passed static checks only. A different server scale
-requires a fresh native budget check. Acceptance must inspect actual CPU quotas and
+Actual cgroups confirmed `12000 100000` on each service, with 32 + 224 MiB memory
+limits and no observed OOM or restarts. A different server scale requires a fresh
+native budget check. Acceptance must inspect actual CPU quotas and
 their sum, as well as memory and swap limits. Do not change server policy or grant
 extra resources. Refusal is a stop condition, not permission to weaken a quota or
 security gate. Managed preparation and initial domain binding may produce another
@@ -138,7 +160,7 @@ disclosure choice. Use only data approved for public display. Do not place the
 API secret in browser-side scripts. The UI loads JavaScript and CSS from
 `unpkg.com`; those scripts execute on the dashboard origin.
 
-## Current limitations and launch blockers
+## Verified scope and remaining limitations
 
 - This pilot's assigned public repository is `NikitaBabenko/ghstats`. A restricted
   credential and masked project ENV have been prepared separately; their current
@@ -164,23 +186,43 @@ API secret in browser-side scripts. The UI loads JavaScript and CSS from
 - The real README button retained the repository through Register and existing
   account Sign in, then reused a manually configured Compose project. Anonymous
   preview still labeled it Dockerfile. Clean zero-configuration onboarding is
-  not proven. The first native deployment started both services, but normal
-  domain-binding continuation stopped with `snapshot_forbidden`; public access
-  and replacement persistence remain unverified. Do not bypass that refusal.
+  not proven. The first native deployment hit `snapshot_forbidden` during domain
+  continuation. A platform fix and a new normal gated deployment subsequently
+  established public access; no source-access or security gate was bypassed.
+  After the pilot was stopped, the repeat badge flow required explicit native
+  Start. Normal Deploy Now then proved replacement persistence on the same volume.
 - Real synchronization stored 14 daily traffic rows for the assigned public
   repository (zero traffic is legitimate). Stargazer backfill returned 403, so
   this is not proof that every metric works. Keep credential permissions narrow.
-- Project ENV reached the frontend runtime and its image build history despite
-  the backend-only recipe references. Current owner settings expose no runtime,
-  build-time, or per-service ENV controls. This requires a supported platform
-  remedy before acceptance; do not supply sensitive data under an isolation claim.
-- Runtime CPU correction, sustained resource fit, public HTTPS/API/badges, and
-  data survival after an ordinary same-provider replacement remain untested.
+- Project ENV still reaches the frontend runtime despite backend-only Compose
+  references. Current owner settings expose no runtime, build-time, or per-service
+  ENV controls. The operator-assisted build-argument mitigation was verified on
+  both new builds; it does not provide runtime secret isolation.
+- Actual CPU/RAM limits, public HTTPS/API/badges, and replacement persistence
+  passed. Twenty paced public requests all returned 200 in 7.11 seconds (median
+  102.9 ms, maximum 135.5 ms), with no restarts or OOM. RAM after that small check
+  was 6.23 MiB; the sum of individual lifetime memory peaks was 16.99 MiB, an upper
+  bound rather than a simultaneous peak. This is not sustained-load evidence.
+- Observed disk use was below the plan: 36,864 bytes in the volume, 65,536 bytes
+  of container writable layers, and approximately 54.8 MiB of conservatively
+  summed virtual image sizes. Hard 4 GB storage-quota enforcement was not proved.
 - `/health` verifies database writability, not a successful GitHub sync. Per-repo
   API failures can be logged while the overall job records success, so a green
   updated badge is not sufficient acceptance evidence.
 
-## Acceptance after prerequisites are met
+## Acceptance evidence and repeat procedure
+
+Both public verification rounds passed: dashboard and repository details,
+views/clones SVG badges, HTMX tables and health returned 200; `/api/repos` returned
+401 without a key or with a wrong key, and 200 with the correct key for exactly
+the assigned repository. Browser navigation and period selection also worked.
+Real GitHub synchronization stored 14 daily traffic rows (zero traffic), with
+the final observed sync taking 2.525 seconds. Star-history backfill remained 403.
+
+The replacement used new frontend and backend containers with the same named
+volume, database inode, creation time and 32,768-byte SQLite file. The canonical
+repository and traffic-row hash matched before and after, retaining one repository
+and 14 daily rows. No fixtures or SQL writes were used to manufacture this result.
 
 Follow the button through authentication with the repository preserved, then use
 the normal gated deployment on explicitly assigned Free hardware. Confirm the
@@ -196,8 +238,9 @@ tests labeled separately.
 
 Capture a baseline, perform a permitted same-provider container replacement through
 the platform, and verify the same mounted database retains history. Never detach,
-delete, or change the volume path to make the check pass. Stop and clean up the
-pilot through the native lifecycle after acceptance or a terminal failure.
+delete, or change the volume path to make the check pass. The present demo was
+explicitly retained for owner review after acceptance; no extra resources were
+allocated. Other temporary tests should use the native lifecycle for cleanup.
 
 Long-term history requires continued collection before GitHub's 14-day traffic
 retention expires. A short pilot proves synchronization and replacement persistence,

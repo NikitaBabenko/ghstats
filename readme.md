@@ -34,7 +34,7 @@ or public stats pages where GitHub's built-in traffic tab is too short-lived.
 
 ## Quick start
 
-### VibeNest pilot (not yet validated)
+### VibeNest pilot (guided setup verified)
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -42,14 +42,22 @@ This fork includes a [guided mixed Compose configuration](VIBENEST.md): a real
 NGINX frontend built from configuration and a pinned upstream ghstats image.
 The original source, tests, and root Dockerfile are preserved; the original
 Compose is archived at `vibenest/upstream/compose.yml`. The button opens repository
-setup; it does not provision credentials or prove a working deployment. An earlier
-revision started both services and stored real GitHub traffic rows, but public
-access and replacement persistence have **not yet been validated**.
-Read the prerequisites and current limitations before deploying.
+setup; it does not provision credentials. On 25 October 2026, the configured
+pilot passed real traffic sync, public HTTPS/dashboard/API/badge checks, and
+SQLite history retention across a normal container replacement.
+[View the demo](https://ghstats-oss-20261025.vibenest.net/).
+This required existing Compose/ENV settings, a repository-limited token, an
+operator-assisted build-secret setting, and an explicit Start after a prior Stop.
+Fresh unattended signup has not been validated. Read the guide's limitations:
+runtime ENV is shared across services, star backfill returned 403, and hard disk
+quota enforcement was not proved. The pilot token expires at 20:00 UTC on
+25 October 2026; continued live sync after that time is not promised.
 The recipe budgets 256 MiB and explicitly caps each service at 0.12 host CPU.
 Their 0.24 total stays below the pilot server's 0.25 host-CPU ceiling (0.5 platform
-vCPU at scale 0.5). These revised caps are statically checked, not runtime-tested;
-they avoid the observed upward rounding of automatic 0.125 quotas to 0.13 each.
+vCPU at scale 0.5). Actual cgroups confirmed `12000 100000` per service; this
+avoids the observed upward rounding of automatic 0.125 quotas to 0.13 each.
+Runtime-tested fork commit: `161628afaa67019ff89304a48a36c297adf3614f`;
+later documentation-only changes are not a new runtime test.
 
 ```sh
 docker run -d --env-file .env -p 8080:8080 -v ./data:/app/data --name ghstats ghcr.io/vladkens/ghstats:latest

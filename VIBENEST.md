@@ -11,7 +11,9 @@ the VibeNest pilot's deployment command.
 The selected root `compose.yml` adds a real HTTP frontend and uses the verified
 upstream application image. Only `vibenest/frontend` is built by this recipe.
 GitHub Actions are disabled in this fork's repository settings; upstream workflow
-files remain intact. No image has been built or deployment accepted for this pilot.
+files remain intact. The earlier configuration revision `e7f4a246` built the
+frontend and started both services through native deployment. The pilot remains
+unaccepted; the revised CPU caps below have not been deployed.
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -34,8 +36,8 @@ files remain intact. No image has been built or deployment accepted for this pil
    values out of Git, screenshots, URLs, logs, and support messages.
 5. Confirm hardware eligibility, source/security admission, build capability, and
    the intended public exposure before using the normal gated deployment action.
-   This pilot has no runtime slot assigned yet. Do not launch this preparation as
-   an acceptance test until its blockers have been resolved.
+   The assigned pilot runtime is paused for further deployments while the blockers
+   below are investigated. Do not repeat launch or bypass a refused continuation.
 
 ## Two useful services and separate identities
 
@@ -45,7 +47,9 @@ files remain intact. No image has been built or deployment accepted for this pil
   upstream, preserving request URI/query, Host, and `x-api-token`. There is no
   static success response, forward-proxy/CONNECT module, dynamic destination, or
   response cache. Only the frontend receives a public domain; neither service
-  publishes host ports. No application secrets are passed to the frontend.
+  publishes host ports. The Compose recipe declares no frontend application ENV;
+  however, the tested provider injected project secrets into frontend runtime ENV
+  and build history. Secret isolation is an unresolved blocker, not a guarantee.
 - `ghstats` runs the unchanged upstream image, not a binary compiled from the new
   frontend configuration. Its source is upstream commit
   `bfa5a13e9a520b695292f307ca774034eb20ceec` (v0.10.0). Registry-attached BuildKit
@@ -56,7 +60,7 @@ files remain intact. No image has been built or deployment accepted for this pil
 | --- | --- |
 | ghstats index | `ghcr.io/vladkens/ghstats@sha256:23e05ff578d1e2b9ceb16228bae673d5dacfd34f5d8678407726d62a330682bf` |
 | ghstats AMD64 manifest | `sha256:1913c91349150b6bc34f1275ff663d3d7efe1fc39590047dde0aaa56750c41d5` |
-| ghstats AMD64 config / expected image ID | `sha256:d870727a958c47ff90ee5ff5ac3e6a5b02dc240b5ed1120d0adfa22b70fb143d` |
+| ghstats AMD64 config | `sha256:d870727a958c47ff90ee5ff5ac3e6a5b02dc240b5ed1120d0adfa22b70fb143d` |
 | NGINX base index | `nginx/nginx-unprivileged@sha256:ea8a305bb7bff1e622c8223a097bf5c7664d36b05371717e23dc69972e1924e6` |
 | NGINX base AMD64 manifest | `sha256:1d88e6f7ea3aa1bb8e89e214e8ab4b0a659553d8a3f9ff7b40d0242119b00c57` |
 
@@ -72,18 +76,22 @@ The requested fork configuration commit and any platform-generated managed
 configuration commit are distinct from the upstream application source commit.
 VibeNest's Compose serving check verifies the built frontend's configuration
 revision; it does not independently prove the prebuilt backend digest. Acceptance
-must additionally compare both actual containers and the backend ImageId and
-RepoDigests with the pinned manifest/config and provenance. The frontend's image
+must additionally compare both actual containers and resolve the backend's image
+index, platform manifest, and config against the pins and provenance. Docker's
+reported ImageId can identify an OCI index with the containerd image store, so it
+must not simply be equated to the config digest. The frontend's image
 ID will differ from its base image after COPY. A new configuration requires fresh
 source/owner/security admission; an earlier source observation is not reusable.
 
-The proposed plan total is 256 MiB / 0.5 platform vCPU. Memory is explicitly split
-into frontend 32 MiB and backend 224 MiB; runtime fit remains unmeasured. The fork
-intentionally omits CPU caps: native managed preparation calculates the host CPU
-budget using the assigned server's scale and divides it across both services.
-On the reviewed platform revision, a scale of 0.5 yields a total host limit of
-0.25 CPU, shared equally as 0.125 per service. These are expected normalized
-values, not measured quotas. Acceptance must inspect both actual CPU quotas and
+Memory is explicitly split into frontend 32 MiB and backend 224 MiB. Both services
+were healthy without restarts or OOM at the first observation; sustained fit is
+not yet proven. At the assigned server's scale of 0.5, Free's 0.5 platform vCPU
+provides a 0.25 host-CPU ceiling. Automatic 0.125-per-service quotas in the earlier
+revision became actual cgroup quotas of `13000 100000` each (0.26 total).
+The current recipe therefore explicitly requests `cpus: '0.12'` on each service:
+0.24 host CPU total, below that ceiling, not a claim to the full plan CPU amount.
+These revised values have passed static checks only. A different server scale
+requires a fresh native budget check. Acceptance must inspect actual CPU quotas and
 their sum, as well as memory and swap limits. Do not change server policy or grant
 extra resources. Refusal is a stop condition, not permission to weaken a quota or
 security gate. Managed preparation and initial domain binding may produce another
@@ -151,11 +159,23 @@ API secret in browser-side scripts. The UI loads JavaScript and CSS from
 - The preserved upstream Dockerfile builds both AMD64 and ARM64 with Rust/zig
   and RUN steps; the selected Compose does not execute it. COPY-only frontend
   packaging avoids those RUN steps, but registry access, extraction, build helpers,
-  and Compose networking remain necessary. A known target-builder network incident
-  has not been disproved by this static recipe. No build or runtime success is
-  claimed; stop on an unexpected network failure or native gate refusal.
-- Runtime Free limits of 256 MB RAM, 0.5 vCPU, and 4 GB storage remain untested.
-  A small image is not evidence of runtime memory fit or build feasibility.
+  and Compose networking remain necessary. The earlier COPY-only frontend build
+  succeeded; that does not establish that a Rust RUN build would succeed.
+- The real README button retained the repository through Register and existing
+  account Sign in, then reused a manually configured Compose project. Anonymous
+  preview still labeled it Dockerfile. Clean zero-configuration onboarding is
+  not proven. The first native deployment started both services, but normal
+  domain-binding continuation stopped with `snapshot_forbidden`; public access
+  and replacement persistence remain unverified. Do not bypass that refusal.
+- Real synchronization stored 14 daily traffic rows for the assigned public
+  repository (zero traffic is legitimate). Stargazer backfill returned 403, so
+  this is not proof that every metric works. Keep credential permissions narrow.
+- Project ENV reached the frontend runtime and its image build history despite
+  the backend-only recipe references. Current owner settings expose no runtime,
+  build-time, or per-service ENV controls. This requires a supported platform
+  remedy before acceptance; do not supply sensitive data under an isolation claim.
+- Runtime CPU correction, sustained resource fit, public HTTPS/API/badges, and
+  data survival after an ordinary same-provider replacement remain untested.
 - `/health` verifies database writability, not a successful GitHub sync. Per-repo
   API failures can be logged while the overall job records success, so a green
   updated badge is not sufficient acceptance evidence.

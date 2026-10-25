@@ -42,11 +42,14 @@ This fork includes a [guided mixed Compose configuration](VIBENEST.md): a real
 NGINX frontend built from configuration and a pinned upstream ghstats image.
 The original source, tests, and root Dockerfile are preserved; the original
 Compose is archived at `vibenest/upstream/compose.yml`. The button opens repository
-setup; it does not provision credentials or prove a working deployment. Free-tier
-deployment, real synchronization, and persistence have **not yet been validated**.
+setup; it does not provision credentials or prove a working deployment. An earlier
+revision started both services and stored real GitHub traffic rows, but public
+access and replacement persistence have **not yet been validated**.
 Read the prerequisites and current limitations before deploying.
-The recipe budgets 256 MiB total; VibeNest calculates both container CPU quotas
-from the plan's 0.5 platform vCPU and the assigned server's CPU scale.
+The recipe budgets 256 MiB and explicitly caps each service at 0.12 host CPU.
+Their 0.24 total stays below the pilot server's 0.25 host-CPU ceiling (0.5 platform
+vCPU at scale 0.5). These revised caps are statically checked, not runtime-tested;
+they avoid the observed upward rounding of automatic 0.125 quotas to 0.13 each.
 
 ```sh
 docker run -d --env-file .env -p 8080:8080 -v ./data:/app/data --name ghstats ghcr.io/vladkens/ghstats:latest
@@ -90,10 +93,10 @@ services:
 
 ### Build locally with Docker Compose
 
-This repository includes a `compose.yml` that builds the local `Dockerfile`, loads variables from `.env`, and stores SQLite data in a Docker named volume.
+The original upstream Compose, preserved at `vibenest/upstream/compose.yml`, builds the root `Dockerfile`, loads variables from `.env`, and stores SQLite data in a Docker named volume. Run it intentionally from the repository root:
 
 ```sh
-docker compose up --build -d
+docker compose --project-directory . -f vibenest/upstream/compose.yml up --build -d
 ```
 
 By default, the local compose setup exposes the app at http://127.0.0.1:8080. You can change the host port with `HOST_PORT` in `.env`.

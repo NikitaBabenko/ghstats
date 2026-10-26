@@ -17,7 +17,7 @@ This is a guided, already-configured project result; unattended fresh signup wit
 no environment values has not been validated.
 
 [Public demo](https://ghstats-oss-20261025.vibenest.net/) is retained for review.
-The pilot token expires at **20:00 UTC on 25 October 2026** (00:00 on 26 October
+The pilot token expired at **20:00 UTC on 25 October 2026** (00:00 on 26 October
 in Asia/Tbilisi); continued live synchronization after expiry is not promised.
 Use your own repository-scoped credential for your deployment.
 
@@ -25,7 +25,9 @@ The runtime-tested fork commit is `161628afaa67019ff89304a48a36c297adf3614f`.
 Successful deployments 5494 and 5495 served managed commits `432b78ba7fa723abfa0af124dfb0649c5a93d2d1`
 and `84d02543269adccec114a66c91f3f6c92aa06ffc`. The latter has the tested fork
 commit as its parent and changes only `compose.yml` for native configuration.
-Later documentation-only changes do not imply another runtime test.
+The 26 October Compose/defaults/template changes have only been statically
+reviewed against platform revision `26261cb5fcaec1b05781560ca5ccda529e38979d`.
+They have not been deployed, and the existing demo and its ENV were not changed.
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -44,8 +46,13 @@ Later documentation-only changes do not imply another runtime test.
    Verify the actual mount and writability by `appuser:appgroup` after startup.
    SQLite is not a recognized Compose database engine in VibeNest's backup UI;
    neither a Storage-tab entry nor HTTP success proves persistence.
-4. Configure the values below in the platform's environment settings. Keep secret
-   values out of Git, screenshots, URLs, logs, and support messages.
+4. Supply your own `GITHUB_TOKEN` for the selected public repository. Ordinary
+   settings below have safe pilot defaults; VibeNest's existing Compose reconcile
+   reads `.env.example` and persists missing defaults and the generated internal
+   secret. Review these settings, particularly the repository filter, rather than
+   manually inventing all eight values. Keep secrets out of Git, screenshots,
+   URLs, logs, and support messages. Local Compose does not generate secrets:
+   copy the template to an uncommitted `.env` and set both credentials yourself.
    For this pilot, an operator disabled the provider's
    `inject_build_args_to_dockerfile` setting before the verified rebuild. Current
    VibeNest owner UI cannot set this option. This operator-assisted step is part
@@ -119,16 +126,48 @@ extra resources. Refusal is a stop condition, not permission to weaken a quota o
 security gate. Managed preparation and initial domain binding may produce another
 configuration commit and a second gated deployment.
 
-| Variable | Intended value / requirement |
-| --- | --- |
-| `HOST` | `0.0.0.0` |
-| `PORT` | `8080` |
-| `DB_PATH` | `/app/data/ghstats.db` |
-| `GHS_FILTER` | Exactly `OWNER/ONE_PUBLIC_REPO`, assigned explicitly for this pilot; replace the placeholder before any launch. No `*` or owner wildcard. |
-| `GHS_INCLUDE_PRIVATE` | `false` |
-| `GITHUB_TOKEN` | A separately approved, repository-limited GitHub credential. Never reuse the owner's general CLI/PAT or a platform credential. |
-| `GHS_API_TOKEN` | A separate strong secret for server-side JSON API clients; never the GitHub credential. |
-| `GHS_CRON_SCHEDULE` | `0 59 * * * *` (six fields; hourly). Startup also attempts synchronization. |
+| Application variable | Resolution when absent / empty | Owner input |
+| --- | --- | --- |
+| `HOST` | Compose default and template value `0.0.0.0` | None |
+| `PORT` | Compose default and template value `8080` | None; frontend expects 8080 |
+| `DB_PATH` | Compose default and template value `/app/data/ghstats.db` | None; inside the persistent volume |
+| `GHS_FILTER` | Compose default and template value `NikitaBabenko/ghstats` | Change to your approved public repo if different; no wildcard default |
+| `GHS_INCLUDE_PRIVATE` | Compose default and template value `false` | None |
+| `GITHUB_TOKEN` | Blank template; required Compose expression; never generated | Your repository-limited GitHub credential |
+| `GHS_API_TOKEN` | Existing nonempty value wins; otherwise use `GHS_AUTH_SECRET`, generated and stored by VibeNest from its blank template entry | No new internal secret input on the reviewed platform path; local Compose users must supply one |
+| `GHS_CRON_SCHEDULE` | Compose default and template value `0 59 * * * *` (hourly, six fields) | None; startup also attempts synchronization |
+
+`GHS_AUTH_SECRET` is an adapter name, not an additional ghstats application
+setting. The platform classifies it as `GeneratedSecret`; `GHS_API_TOKEN` is
+`UserOnly` because generic token names are intentionally not generated.
+The external-provider rule also makes `GITHUB_TOKEN` `UserOnly`.
+Reconciliation generates 24 random bytes as 48 hex characters, stores the value
+as sensitive, and preserves an existing value on later runs. Nothing is generated
+by this repository, and no real or shared sample secret is committed.
+The adapter applies only to this fork's root `compose.yml`; direct upstream
+`docker run` and the archived upstream Compose require `GHS_API_TOKEN` itself.
+The [nested Compose fallback](https://docs.docker.com/reference/compose-file/interpolation/)
+preserves a legacy nonempty `GHS_API_TOKEN` rather than silently rotating it.
+If neither internal value is available, Compose fails instead of enabling an
+unauthenticated API. An explicitly empty or invalid existing platform variable
+needs correction; the reconciler does not promise to overwrite existing rows.
+
+In the reviewed platform source, Compose environment extraction keeps YAML scalar
+values intact, and the native resource overlay copies scalar values unchanged.
+This recipe has no `env_file` for the missing-file rewrite to replace.
+The reconciler obtains defaults from the template, not from a partial parse of
+the nested expression. These are source-review findings; the provider's own
+parsing and final container environment still need a runtime check.
+
+Static review establishes this configuration contract, not end-to-end onboarding.
+The remaining owner-only gap is the operator-assisted provider setting above:
+the reviewed platform source exposes no owner control for
+`inject_build_args_to_dockerfile`, and ENV sync still sends project-wide key/value
+pairs. Defaults and secret generation do not remove build-history or runtime
+fanout concerns. A fresh button run must verify missing-token guidance, generated
+secret persistence, nested interpolation, ordinary gate success and the provider
+setting before this revision can be called runtime-verified. For another user's
+repository, the filter must also be changed to that intended public repository.
 
 Alternatively, upstream supports `GITHUB_TOKEN_FILE`, which takes precedence over
 `GITHUB_TOKEN` and is reread for each request. Installation tokens require an

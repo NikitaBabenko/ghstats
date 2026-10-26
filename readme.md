@@ -34,7 +34,7 @@ or public stats pages where GitHub's built-in traffic tab is too short-lived.
 
 ## Quick start
 
-### VibeNest pilot (guided setup verified)
+### VibeNest pilot (previous guided setup verified)
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -42,7 +42,7 @@ This fork includes a [guided mixed Compose configuration](VIBENEST.md): a real
 NGINX frontend built from configuration and a pinned upstream ghstats image.
 The original source, tests, and root Dockerfile are preserved; the original
 Compose is archived at `vibenest/upstream/compose.yml`. The button opens repository
-setup; it does not provision credentials. On 25 October 2026, the configured
+setup; it does not provision external credentials. On 25 October 2026, the configured
 pilot passed real traffic sync, public HTTPS/dashboard/API/badge checks, and
 SQLite history retention across a normal container replacement.
 [View the demo](https://ghstats-oss-20261025.vibenest.net/).
@@ -50,14 +50,27 @@ This required existing Compose/ENV settings, a repository-limited token, an
 operator-assisted build-secret setting, and an explicit Start after a prior Stop.
 Fresh unattended signup has not been validated. Read the guide's limitations:
 runtime ENV is shared across services, star backfill returned 403, and hard disk
-quota enforcement was not proved. The pilot token expires at 20:00 UTC on
+quota enforcement was not proved. The pilot token expired at 20:00 UTC on
 25 October 2026; continued live sync after that time is not promised.
 The recipe budgets 256 MiB and explicitly caps each service at 0.12 host CPU.
 Their 0.24 total stays below the pilot server's 0.25 host-CPU ceiling (0.5 platform
 vCPU at scale 0.5). Actual cgroups confirmed `12000 100000` per service; this
 avoids the observed upward rounding of automatic 0.125 quotas to 0.13 each.
 Runtime-tested fork commit: `161628afaa67019ff89304a48a36c297adf3614f`;
-later documentation-only changes are not a new runtime test.
+The 26 October ENV simplification below is statically reviewed, not deployed.
+
+Ordinary settings now have defaults in Compose and `.env.example`. VibeNest's
+existing autofill recognizes the empty `GHS_AUTH_SECRET` as an internal secret,
+generates and stores it, and Compose passes it to ghstats as `GHS_API_TOKEN`.
+An existing nonempty `GHS_API_TOKEN` takes precedence. The only external credential
+is your own `GITHUB_TOKEN`; it cannot be generated. The default filter is exactly
+`NikitaBabenko/ghstats`; choose your own approved public repository when needed.
+The operator-assisted build-argument setting is still required for the demonstrated
+secret-handling contract. A clean owner-only button path is not yet verified.
+
+For the upstream `docker run` and archived Compose examples below, set
+`GHS_API_TOKEN` directly: the `GHS_AUTH_SECRET` adapter is specific to this fork's
+root `compose.yml`.
 
 ```sh
 docker run -d --env-file .env -p 8080:8080 -v ./data:/app/data --name ghstats ghcr.io/vladkens/ghstats:latest

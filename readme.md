@@ -45,7 +45,9 @@ Compose is archived at `vibenest/upstream/compose.yml`. The button opens reposit
 setup; it does not provision external credentials. On 25 October 2026, the configured
 pilot passed real traffic sync, public HTTPS/dashboard/API/badge checks, and
 SQLite history retention across a normal container replacement.
-[View the demo](https://ghstats-oss-20261025.vibenest.net/).
+The temporary demo was stopped on 27 October 2026 and its Free hardware returned
+to inventory for the next pilot. Its SQLite volume and project ENV were retained;
+there is no live demo currently offered.
 This required existing Compose/ENV settings, a repository-limited token, an
 operator-assisted build-secret setting, and an explicit Start after a prior Stop.
 Fresh unattended signup has not been validated. Read the guide's limitations:

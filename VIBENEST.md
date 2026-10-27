@@ -16,7 +16,10 @@ sync, public HTTPS/API/badges, and SQLite retention across a normal replacement.
 This is a guided, already-configured project result; unattended fresh signup with
 no environment values has not been validated.
 
-[Public demo](https://ghstats-oss-20261025.vibenest.net/) is retained for review.
+The temporary public demo was stopped on **27 October 2026** through the owner
+Stop and Release hardware flow. Its Free hardware returned to inventory for the
+next pilot. The named SQLite volume and eight project ENV entries were retained;
+this guide no longer offers a live demo.
 The pilot token expired at **20:00 UTC on 25 October 2026** (00:00 on 26 October
 in Asia/Tbilisi); continued live synchronization after expiry is not promised.
 Use your own repository-scoped credential for your deployment.
@@ -27,7 +30,8 @@ and `84d02543269adccec114a66c91f3f6c92aa06ffc`. The latter has the tested fork
 commit as its parent and changes only `compose.yml` for native configuration.
 The 26 October Compose/defaults/template changes have only been statically
 reviewed against platform revision `26261cb5fcaec1b05781560ca5ccda529e38979d`.
-They have not been deployed, and the existing demo and its ENV were not changed.
+They have not been deployed. That static preparation did not change the demo or
+its ENV; the later 27 October retirement only used the native Stop/Release flow.
 
 [![Deploy to VibeNest](https://vibenest.net/deploy-to-vibenest.svg)](https://vibenest.net/deploy?repo=https://github.com/NikitaBabenko/ghstats)
 
@@ -277,9 +281,13 @@ tests labeled separately.
 
 Capture a baseline, perform a permitted same-provider container replacement through
 the platform, and verify the same mounted database retains history. Never detach,
-delete, or change the volume path to make the check pass. The present demo was
-explicitly retained for owner review after acceptance; no extra resources were
-allocated. Other temporary tests should use the native lifecycle for cleanup.
+delete, or change the volume path to make the check pass. After the review window,
+the pilot was retired on 27 October using owner Stop and Release hardware.
+The provider app remained stopped with no containers, and the same SQLite volume,
+file identity and content hash survived both actions. Release cleared the project's
+active provider reference while retaining the provider app and recorded binding;
+future reattachment/recovery has not been tested. No data volume was deleted.
+Other temporary tests should use the native lifecycle for cleanup.
 
 Long-term history requires continued collection before GitHub's 14-day traffic
 retention expires. A short pilot proves synchronization and replacement persistence,
